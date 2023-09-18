@@ -24,6 +24,9 @@ import { RecordsDeleteHandler } from './handlers/records-delete.js';
 import { RecordsQueryHandler } from './handlers/records-query.js';
 import { RecordsReadHandler } from './handlers/records-read.js';
 import { RecordsWriteHandler } from './handlers/records-write.js';
+import { SubscriptionsDeleteHandler } from './handlers/subscriptions-delete.js';
+import { SubscriptionsQueryHandler } from './handlers/subscriptions-query.js';
+import { SubscriptionsCreateHandler } from './handlers/subscriptions-create.js';
 import { DwnInterfaceName, DwnMethodName, Message } from './core/message.js';
 
 export class Dwn {
@@ -58,6 +61,10 @@ export class Dwn {
       [DwnInterfaceName.Records + DwnMethodName.Query]: new RecordsQueryHandler(this.didResolver, this.messageStore, this.dataStore),
       [DwnInterfaceName.Records + DwnMethodName.Read]: new RecordsReadHandler(this.didResolver, this.messageStore, this.dataStore),
       [DwnInterfaceName.Records + DwnMethodName.Write]: new RecordsWriteHandler(this.didResolver, this.messageStore, this.dataStore, this.eventLog),
+      [DwnInterfaceName.Subscriptions + DwnMethodName.Create]: new SubscriptionsCreateHandler(this.didResolver, this.messageStore, this.dataStore),
+      [DwnInterfaceName.Subscriptions + DwnMethodName.Query]: new SubscriptionsQueryHandler(this.didResolver, this.messageStore, this.dataStore),
+      [DwnInterfaceName.Subscriptions + DwnMethodName.Delete]: new SubscriptionsDeleteHandler(this.didResolver, this.messageStore, this.dataStore),
+
     };
   }
 
