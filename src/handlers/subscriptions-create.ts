@@ -13,12 +13,22 @@ import { Cid, DataStream, DwnConstant, Encoder } from '../index.js';
 import { DwnError, DwnErrorCode } from '../core/dwn-error.js';
 import { DwnInterfaceName, DwnMethodName, Message } from '../core/message.js';
 
+// TODO: FIXME
 export type SubscriptionCreateHandlerOptions = {
   skipDataStorage?: boolean; // used for DWN sync
 };
 
 type HandlerArgs = { tenant: string, message: RecordsWriteMessage, options?: SubscriptionCreateHandlerOptions, dataStream?: _Readable.Readable };
 
+/*
+ * stores a subscription record in the subscription bucket
+ * subscription record has the following properties:
+ *
+ * author of the subscription record is essentially the "subscriber"
+ * reciepient is the "publisher"
+ *
+ * this is not dealing with the problem of propogation
+ */
 export class SubscriptionCreateHandler implements MethodHandler {
 
   constructor(private didResolver: DidResolver, private messageStore: MessageStore, private dataStore: DataStore, private eventLog: EventLog) {}

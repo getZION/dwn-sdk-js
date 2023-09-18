@@ -36,6 +36,19 @@ export type SubscriptionEventDescriptor = {
   messageTimestamp: string;
 }
 
+export type SubscriptionFilter = {
+  methods?: string[]; // all, create, write, update, delete, etc.
+  attester?: string;
+  recipient?: string;
+  protocol?: string;
+  protocolPath?: string;
+  contextId?: string;
+  schema?: string;
+  recordId?: string;
+  parentId?: string;
+};
+
+
 export type SubscriptionEventMessage = {
   authorization?: GeneralJws;
   descriptor: SubscriptionEventDescriptor;
@@ -70,7 +83,7 @@ export type SubscriptionQueryDescriptor = {
   interface: DwnInterfaceName.Subscriptions;
   method: DwnMethodName.Query;
   messageTimestamp: string;
-  filter: RecordsFilter;
+  filter: SubscriptionFilter;
   dateSort?: DateSort;
 };
 

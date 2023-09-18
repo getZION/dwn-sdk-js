@@ -12,6 +12,7 @@ import { RecordsRead } from '../interfaces/records-read.js';
 import { RecordsWrite } from '../interfaces/records-write.js';
 import { DataStream, DwnError, DwnErrorCode, Encoder } from '../index.js';
 
+// TODO: FIXME
 export class SubscriptionsDeleteHandler implements MethodHandler {
 
   constructor(private didResolver: DidResolver, private messageStore: MessageStore, private dataStore: DataStore) {}

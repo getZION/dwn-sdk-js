@@ -1,7 +1,7 @@
 import type { GenericMessage } from '../types/message-types.js';
 import type { MessageStore } from '../types/message-store.js';
 import type { RecordsWrite } from './records-write.js';
-import type { RecordsFilter } from '../types/records-types.js';
+import type { SubscriptionFilter } from '../types/subscription-types.js';
 import type { SubscriptionCreateMessage, SubscriptionCreateDescriptor } from '../types/subscription-types.js';
 
 import type { SignatureInput } from '../types/jws-types.js';
@@ -22,6 +22,11 @@ export type SubscribeOptions = {
   permissionsGrantId?: string;
 };
 
+
+/*
+ * essentially mirrors the the RecordsWrite interface.
+ * returns a SubscriptionCreateMessage with importantly an id
+ */
 export class SubscriptionCreate extends Message<SubscriptionCreateMessage> {
 
   public static async parse(message: SubscriptionCreateMessage): Promise<SubscriptionCreate> {
@@ -62,7 +67,7 @@ export class SubscriptionCreate extends Message<SubscriptionCreateMessage> {
 
     Message.validateJsonSchema(message);
 
-    return new Subscribe(message);
+    return new SubscriptionCreate(message);
   }
 
   public async authorize(tenant: string, newestRecordsWrite: RecordsWrite, messageStore: MessageStore): Promise<void> {
