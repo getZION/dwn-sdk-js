@@ -22,14 +22,14 @@ export type SubscribeOptions = {
   permissionsGrantId?: string;
 };
 
-export class Subscribe extends Message<SubscriptionCreateMessage> {
+export class SubscriptionCreate extends Message<SubscriptionCreateMessage> {
 
-  public static async parse(message: SubscriptionCreateMessage): Promise<Subscribe> {
+  public static async parse(message: SubscriptionCreateMessage): Promise<SubscriptionCreate> {
     if (message.authorization !== undefined) {
       await validateAuthorizationIntegrity(message as GenericMessage);
     }
 
-    const recordsRead = new Subscribe(message);
+    const recordsRead = new SubscriptionCreate(message);
     return recordsRead;
   }
 
