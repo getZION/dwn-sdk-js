@@ -67,7 +67,10 @@ export type SubscriptionsRevokeMessage = GenericMessage & {
   descriptor: SubscriptionsRevokeDescriptor;
 }
 
+// TODO: just use EventGet type?
 export type SubscriptionEventDescriptor = {
+  interface: DwnInterfaceName.Subscriptions;
+  method: DwnMethodName.Create;
   action?: string;
   recordId?: string;
   contextId?: string;
@@ -76,7 +79,7 @@ export type SubscriptionEventDescriptor = {
   encryption?: EncryptionProperty;
   messageTimestamp: string;
 }
-export type SubscriptionEventMessage = {
+export type SubscriptionEventMessage = GenericMessage & {
   authorization?: GeneralJws;
   descriptor: SubscriptionEventDescriptor;
 };
