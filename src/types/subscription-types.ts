@@ -1,7 +1,7 @@
 import type { GenericMessage } from './message-types.js';
 import type { DwnInterfaceName, DwnMethodName } from '../index.js';
 import type { GeneralJws } from './jws-types.js';
-import type { EncryptionProperty } from './records-types.js';
+import type { EncryptionProperty, RecordsFilter } from './records-types.js';
 
 export type SubscriptionScope = {
   interface: DwnInterfaceName;
@@ -9,6 +9,7 @@ export type SubscriptionScope = {
 }
 
 export type SubscriptionConditions = {
+  // TODO: conditions in which subscription is hooked. defaults to at all times.
 };
 
 export type SubscriptionRequestDescriptor = {
@@ -55,6 +56,7 @@ export type SubscriptionsGrantMessage = GenericMessage & {
   descriptor: SubscriptionsGrantDescriptor;
 };
 
+// used when a subscription access is revoked.
 export type SubscriptionsRevokeDescriptor = {
   interface: DwnInterfaceName.Subscriptions;
   method: DwnMethodName.Revoke;
@@ -71,7 +73,6 @@ export type SubscriptionsRevokeMessage = GenericMessage & {
 export type SubscriptionEventDescriptor = {
   interface: DwnInterfaceName.Subscriptions;
   method: DwnMethodName.Create;
-  action?: string;
   recordId?: string;
   contextId?: string;
   messageId?: string;
@@ -79,7 +80,23 @@ export type SubscriptionEventDescriptor = {
   encryption?: EncryptionProperty;
   messageTimestamp: string;
 }
+
 export type SubscriptionEventMessage = GenericMessage & {
   authorization?: GeneralJws;
   descriptor: SubscriptionEventDescriptor;
+};
+
+export type SubscriptionFilter = RecordsFilter & {
+  methods?: string[];
+  // Default to all methods. Otherwise, explicitly subscribe to subset of methods.
+  interfaces?: string[];
+  // Default to all interfaces. Can be subset.
+  recordId?: string;
+  // Rarely will be used.
+  contextId?: string;
+  messageId?: string;
+  author?: string;
+  // filter based on author. defaults to all
+  receipient?: string;
+  // filter based on targets. defaults to all.
 };
