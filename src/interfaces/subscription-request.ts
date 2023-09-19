@@ -2,7 +2,7 @@ import type { GenericMessage } from '../types/message-types.js';
 import type { MessageStore } from '../types/message-store.js';
 import type { RecordsWrite } from './records-write.js';
 import type { SubscriptionFilter } from '../types/subscription-types.js';
-import type { SubscriptionCreateMessage, SubscriptionCreateDescriptor } from '../types/subscription-types.js';
+import type { SubscriptionRequestMessage, SubscriptionRequestDescriptor } from '../types/subscription-types.js';
 
 import type { SignatureInput } from '../types/jws-types.js';
 
@@ -25,16 +25,16 @@ export type SubscribeOptions = {
 
 /*
  * essentially mirrors the the RecordsWrite interface.
- * returns a SubscriptionCreateMessage with importantly an id
+ * returns a SubscriptionRequestMessage with importantly an id
  */
-export class SubscriptionCreate extends Message<SubscriptionCreateMessage> {
+export class SubscriptionRequest extends Message<SubscriptionRequestMessage> {
 
-  public static async parse(message: SubscriptionCreateMessage): Promise<SubscriptionCreate> {
+  public static async parse(message: SubscriptionRequestMessage): Promise<SubscriptionRequest> {
     if (message.authorization !== undefined) {
       await validateAuthorizationIntegrity(message as GenericMessage);
     }
 
-    const recordsRead = new SubscriptionCreate(message);
+    const recordsRead = new SubscriptionRequest(message);
     return recordsRead;
   }
 
@@ -49,7 +49,7 @@ export class SubscriptionCreate extends Message<SubscriptionCreateMessage> {
     const { filter, authorizationSignatureInput, permissionsGrantId } = options;
     const currentTime = getCurrentTimeInHighPrecision();
 
-    const descriptor: SubscriptionCreateDescriptor = {
+    const descriptor: SubscriptionRequestDescriptor = {
       interface: DwnInterfaceName.Subscriptions,
       method: DwnMethodName.Create,
       filter: Records.normalizeFilter(filter),
@@ -63,11 +63,11 @@ export class SubscriptionCreate extends Message<SubscriptionCreateMessage> {
     if (authorizationSignatureInput !== undefined) {
       authorization = await Message.signAsAuthorization(descriptor, authorizationSignatureInput, permissionsGrantId);
     }
-    const message: SubscriptionCreateMessage = { descriptor, authorization };
+    const message: SubscriptionRequestMessage = { descriptor, authorization };
 
     Message.validateJsonSchema(message);
 
-    return new SubscriptionCreate(message);
+    return new SubscriptionRequest(message);
   }
 
   public async authorize(tenant: string, newestRecordsWrite: RecordsWrite, messageStore: MessageStore): Promise<void> {

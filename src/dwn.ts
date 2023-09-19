@@ -9,6 +9,7 @@ import type { TenantGate } from './core/tenant-gate.js';
 import type { GenericMessageReply, UnionMessageReply } from './core/message-reply.js';
 import type { MessagesGetMessage, MessagesGetReply } from './types/messages-types.js';
 import type { RecordsQueryMessage, RecordsQueryReply, RecordsReadMessage, RecordsReadReply, RecordsWriteMessage } from './types/records-types.js';
+import type { SubscriptionCreateMessage, SubscriptionCreateReplyMessage } from './types/subscriptions-types.js';
 
 import { AllowAllTenantGate } from './core/tenant-gate.js';
 import { DidResolver } from './did/did-resolver.js';
@@ -26,7 +27,7 @@ import { RecordsReadHandler } from './handlers/records-read.js';
 import { RecordsWriteHandler } from './handlers/records-write.js';
 import { SubscriptionsDeleteHandler } from './handlers/subscriptions-delete.js';
 import { SubscriptionsQueryHandler } from './handlers/subscriptions-query.js';
-import { SubscriptionsCreateHandler } from './handlers/subscriptions-create.js';
+import { SubscriptionCreateHandler } from './handlers/subscriptions-create.js';
 import { DwnInterfaceName, DwnMethodName, Message } from './core/message.js';
 
 export class Dwn {
@@ -61,10 +62,7 @@ export class Dwn {
       [DwnInterfaceName.Records + DwnMethodName.Query]: new RecordsQueryHandler(this.didResolver, this.messageStore, this.dataStore),
       [DwnInterfaceName.Records + DwnMethodName.Read]: new RecordsReadHandler(this.didResolver, this.messageStore, this.dataStore),
       [DwnInterfaceName.Records + DwnMethodName.Write]: new RecordsWriteHandler(this.didResolver, this.messageStore, this.dataStore, this.eventLog),
-      [DwnInterfaceName.Subscriptions + DwnMethodName.Create]: new SubscriptionsCreateHandler(this.didResolver, this.messageStore, this.dataStore),
-      [DwnInterfaceName.Subscriptions + DwnMethodName.Query]: new SubscriptionsQueryHandler(this.didResolver, this.messageStore, this.dataStore),
-      [DwnInterfaceName.Subscriptions + DwnMethodName.Delete]: new SubscriptionsDeleteHandler(this.didResolver, this.messageStore, this.dataStore),
-
+      [DwnInterfaceName.Subscriptions + DwnMethodName.Create]: new SubscriptionCreateHandler(this.didResolver, this.messageStore, this.dataStore, this.eventLog),
     };
   }
 
@@ -151,6 +149,22 @@ export class Dwn {
     const handler = new RecordsReadHandler(this.didResolver, this.messageStore, this.dataStore);
     return handler.handle({ tenant, message });
   }
+
+  /**
+   * Handles a `SubscriptionCreate` message.
+   */
+  public async handleSubscriptionCreate(tenant: string, message: SubscriptionCreateMessage): Promise<SubscriptionCreateReplyMessage> {
+    const errorMessageReply =
+      await this.validateTenant(tenant) ??
+      await this.validateMessageIntegrity(message, DwnInterfaceName.Subscriptions, DwnMethodName.Create);
+    if (errorMessageReply !== undefined) {
+      return errorMessageReply;
+    }
+
+    const handler = new SubscriptionCreateHandler(this.didResolver, this.messageStore, this.dataStore, this.eventLog);
+    return handler.handle({ tenant, message });
+  }
+
 
   /**
    * Handles a `MessagesGet` message.

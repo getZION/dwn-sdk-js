@@ -9,6 +9,15 @@ import type { BaseAuthorizationPayload, GenericMessage } from './message-types.j
 import type { DwnInterfaceName, DwnMethodName } from '../core/message.js';
 import type { RecordsFilter, RecordsQueryMessage, RecordsWriteMessage, RecordsDeleteMessage, EncryptionProperty } from './records-types.js';
 
+export type SubscriptionScope = {
+  interface: DwnInterfaceName;
+  method: DwnMethodName;
+};
+
+export type SubscriptionConditions = {
+};
+
+
 export type SubscriptionCreateDescriptor = {
   interface: DwnInterfaceName.Subscriptions;
   method: DwnMethodName.Create;
@@ -69,6 +78,11 @@ export type SubscriptionCreateMessage = RecordsWriteMessage & {
   active: boolean
 };
 
+export type SubscriptionCreateReplyMessage = GenericMessage & {
+  id: string;
+};
+
+
 /**
  * Data structure returned in a `SubscriptionQuery` reply entry.
  * NOTE: the message structure is a modified version of the message received, the most notable differences are:
@@ -111,4 +125,27 @@ export type SubscriptionDeleteDescriptor = {
   method: DwnMethodName.Delete;
   recordId: string;
   messageTimestamp: string;
+};
+
+export type SubscriptionRequestDescriptor = {
+  interface: DwnInterfaceName.Subscriptions;
+  method: DwnMethodName.Request;
+  protocol?: string;
+  protocolPath?: string;
+  recipient?: string;
+  schema?: string;
+  parentId?: string;
+  dataCid: string;
+  dataSize: number;
+  dateCreated: string;
+  messageTimestamp: string;
+  published?: boolean;
+  datePublished?: string;
+  dataFormat: string;
+  scope: SubscriptionScope;
+  conditions?: SubscriptionConditions;
+}
+
+export type SubscriptionRequestMessage = GenericMessage & {
+  descriptor: SubscriptionRequestDescriptor;
 };
