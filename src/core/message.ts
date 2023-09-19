@@ -16,6 +16,7 @@ export enum DwnInterfaceName {
   Permissions = 'Permissions',
   Protocols = 'Protocols',
   Records = 'Records',
+  Subscriptions = 'Subscriptions',
   Snapshots = 'Snapshots'
 }
 
