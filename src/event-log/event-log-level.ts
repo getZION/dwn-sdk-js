@@ -4,6 +4,7 @@ import type { Event, EventLog, GetEventsOptions } from '../types/event-log.js';
 
 import { monotonicFactory } from 'ulidx';
 import { createLevelDatabase, LevelWrapper } from '../store/level-wrapper.js';
+import { EventStream } from '../types/event-stream.js';
 
 type EventLogLevelConfig = {
  /**
@@ -13,10 +14,13 @@ type EventLogLevelConfig = {
   */
   location: string,
   createLevelDatabase?: typeof createLevelDatabase,
+  eventStream?: EventStream,
 };
 
 const WATERMARKS_SUBLEVEL_NAME = 'watermarks';
 const CIDS_SUBLEVEL_NAME = 'cids';
+
+type AsyncEventCallbackFunction<T> = (event: T) => Promise<void>;
 
 export class EventLogLevel implements EventLog {
   config: EventLogLevelConfig;
@@ -55,6 +59,12 @@ export class EventLogLevel implements EventLog {
 
     await watermarkLog.put(watermark, messageCid);
     await cidLog.put(messageCid, watermark);
+
+    // Note: this means that the message will flow through the 
+    // eventLog BEFORE it flows through the event stream. 
+    if (this.config.eventStream){
+      this.config.eventStream.append(tenant, messageCid);
+    }
 
     return watermark;
   }
