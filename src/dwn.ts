@@ -24,14 +24,21 @@ import { RecordsDeleteHandler } from './handlers/records-delete.js';
 import { RecordsQueryHandler } from './handlers/records-query.js';
 import { RecordsReadHandler } from './handlers/records-read.js';
 import { RecordsWriteHandler } from './handlers/records-write.js';
+// import { SubscriptionsRequestHandler } from './handlers/subscription-request.js';
+// import type { SubscriptionStore } from './types/subscription-store.js';
+
+import { EventStream } from './types/event-stream.js';
+
 import { DwnInterfaceName, DwnMethodName, Message } from './core/message.js';
 
 export class Dwn {
-  private methodHandlers: { [key:string]: MethodHandler };
+  private methodHandlers: { [key: string]: MethodHandler };
   private didResolver: DidResolver;
   private messageStore: MessageStore;
   private dataStore: DataStore;
+ // private subscriptionStore: SubscriptionStore;
   private eventLog: EventLog;
+  private eventStream: EventStream;
   private tenantGate: TenantGate;
 
   private constructor(config: DwnConfig) {
@@ -40,24 +47,27 @@ export class Dwn {
     this.messageStore = config.messageStore;
     this.dataStore = config.dataStore;
     this.eventLog = config.eventLog;
+  //  this.subscriptionStore = config.subscriptionStore;
+    this.eventStream = new EventStream();
 
     this.methodHandlers = {
-      [DwnInterfaceName.Events + DwnMethodName.Get]        : new EventsGetHandler(this.didResolver, this.eventLog),
-      [DwnInterfaceName.Messages + DwnMethodName.Get]      : new MessagesGetHandler(this.didResolver, this.messageStore, this.dataStore),
-      [DwnInterfaceName.Permissions + DwnMethodName.Grant] : new PermissionsGrantHandler(
-        this.didResolver, this.messageStore, this.eventLog),
+      [DwnInterfaceName.Events + DwnMethodName.Get]: new EventsGetHandler(this.didResolver, this.eventLog),
+      [DwnInterfaceName.Messages + DwnMethodName.Get]: new MessagesGetHandler(this.didResolver, this.messageStore, this.dataStore),
+      [DwnInterfaceName.Permissions + DwnMethodName.Grant]: new PermissionsGrantHandler(
+        this.didResolver, this.messageStore, this.eventStream),
       [DwnInterfaceName.Permissions + DwnMethodName.Request]: new PermissionsRequestHandler(
-        this.didResolver, this.messageStore, this.eventLog),
+        this.didResolver, this.messageStore, this.eventStream),
       [DwnInterfaceName.Permissions + DwnMethodName.Revoke]: new PermissionsRevokeHandler(
         this.didResolver, this.messageStore, this.eventLog),
       [DwnInterfaceName.Protocols + DwnMethodName.Configure]: new ProtocolsConfigureHandler(
-        this.didResolver, this.messageStore, this.dataStore, this.eventLog),
-      [DwnInterfaceName.Protocols + DwnMethodName.Query] : new ProtocolsQueryHandler(this.didResolver, this.messageStore, this.dataStore),
-      [DwnInterfaceName.Records + DwnMethodName.Delete]  : new RecordsDeleteHandler(
-        this.didResolver, this.messageStore, this.dataStore, this.eventLog),
-      [DwnInterfaceName.Records + DwnMethodName.Query] : new RecordsQueryHandler(this.didResolver, this.messageStore, this.dataStore),
-      [DwnInterfaceName.Records + DwnMethodName.Read]  : new RecordsReadHandler(this.didResolver, this.messageStore, this.dataStore),
-      [DwnInterfaceName.Records + DwnMethodName.Write] : new RecordsWriteHandler(this.didResolver, this.messageStore, this.dataStore, this.eventLog),
+        this.didResolver, this.messageStore, this.dataStore, this.eventStream),
+      [DwnInterfaceName.Protocols + DwnMethodName.Query]: new ProtocolsQueryHandler(this.didResolver, this.messageStore, this.dataStore),
+      [DwnInterfaceName.Records + DwnMethodName.Delete]: new RecordsDeleteHandler(
+        this.didResolver, this.messageStore, this.dataStore, this.eventStream),
+      [DwnInterfaceName.Records + DwnMethodName.Query]: new RecordsQueryHandler(this.didResolver, this.messageStore, this.dataStore),
+      [DwnInterfaceName.Records + DwnMethodName.Read]: new RecordsReadHandler(this.didResolver, this.messageStore, this.dataStore),
+      [DwnInterfaceName.Records + DwnMethodName.Write]: new RecordsWriteHandler(this.didResolver, this.messageStore, this.dataStore, this.eventStream),
+      // [DwnInterfaceName.Subscriptions + DwnMethodName.Request]: new SubscriptionsRequestHandler(this.didResolver, this.messageStore, this.eventStream, this.subscriptionStore),
     };
   }
 
@@ -237,5 +247,6 @@ export type DwnConfig = {
 
   messageStore: MessageStore;
   dataStore: DataStore;
+  subscriptionStore: SubscriptionStore;
   eventLog: EventLog
 };
