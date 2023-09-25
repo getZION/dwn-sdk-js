@@ -9,6 +9,7 @@ import type { TenantGate } from './core/tenant-gate.js';
 import type { GenericMessageReply, UnionMessageReply } from './core/message-reply.js';
 import type { MessagesGetMessage, MessagesGetReply } from './types/messages-types.js';
 import type { RecordsQueryMessage, RecordsQueryReply, RecordsReadMessage, RecordsReadReply, RecordsWriteMessage } from './types/records-types.js';
+import type { EventStreamI } from './event-log/event-stream.js';
 
 import { AllowAllTenantGate } from './core/tenant-gate.js';
 import { DidResolver } from './did/did-resolver.js';
@@ -24,7 +25,13 @@ import { RecordsDeleteHandler } from './handlers/records-delete.js';
 import { RecordsQueryHandler } from './handlers/records-query.js';
 import { RecordsReadHandler } from './handlers/records-read.js';
 import { RecordsWriteHandler } from './handlers/records-write.js';
+import { SubscriptionsRequestHandler } from './handlers/subscriptions-request.js';
+
 import { DwnInterfaceName, DwnMethodName, Message } from './core/message.js';
+import { EventStream } from './event-log/event-stream.js';
+import { EventEmitter } from 'events';
+import { SubscriptionRequest } from './interfaces/subscription-request.js';
+import { SubscriptionRequestMessage, SubscriptionRequestReply } from './types/subscriptions-request.js';
 
 export class Dwn {
   private methodHandlers: { [key:string]: MethodHandler };
@@ -33,6 +40,7 @@ export class Dwn {
   private dataStore: DataStore;
   private eventLog: EventLog;
   private tenantGate: TenantGate;
+  private eventStream?: EventStreamI;
 
   private constructor(config: DwnConfig) {
     this.didResolver = config.didResolver!;
@@ -40,6 +48,7 @@ export class Dwn {
     this.messageStore = config.messageStore;
     this.dataStore = config.dataStore;
     this.eventLog = config.eventLog;
+    this.eventStream = config.eventStream;
 
     this.methodHandlers = {
       [DwnInterfaceName.Events + DwnMethodName.Get]        : new EventsGetHandler(this.didResolver, this.eventLog),
@@ -59,6 +68,11 @@ export class Dwn {
       [DwnInterfaceName.Records + DwnMethodName.Read]  : new RecordsReadHandler(this.didResolver, this.messageStore, this.dataStore),
       [DwnInterfaceName.Records + DwnMethodName.Write] : new RecordsWriteHandler(this.didResolver, this.messageStore, this.dataStore, this.eventLog),
     };
+
+    // only add subscriptions if event stream is enabled.
+    if (this.eventStream !== undefined) {
+      this.methodHandlers[DwnInterfaceName.Subscriptions + DwnMethodName.Request] = new SubscriptionsRequestHandler(this.didResolver, this.messageStore, this.dataStore, this.eventStream)
+    }
   }
 
   /**
@@ -78,12 +92,18 @@ export class Dwn {
     await this.messageStore.open();
     await this.dataStore.open();
     await this.eventLog.open();
+    if (this.eventStream){
+      await this.eventStream.open();
+    }
   }
 
   public async close(): Promise<void> {
     this.messageStore.close();
     this.dataStore.close();
     this.eventLog.close();
+    if (this.eventStream){
+      await this.eventStream.close();
+    }
   }
 
   /**
@@ -103,9 +123,34 @@ export class Dwn {
       dataStream
     });
 
+    // at the end of process message, add a message to event queue for handling.
+    const event = {descriptor: {
+      ...rawMessage.descriptor,
+      tenant: tenant,
+    },}
+
+    if (this.eventStream){
+      this.eventStream.add(event);
+    }
+
     return methodHandlerReply;
   }
 
+    /**
+   * Handles a `RecordsRead` message.
+   */
+    public async handleSubscriptionRequest(tenant: string, message: SubscriptionRequestMessage): Promise<SubscriptionRequestReply> {
+      const errorMessageReply =
+        await this.validateTenant(tenant) ??
+        await this.validateMessageIntegrity(message, DwnInterfaceName.Records, DwnMethodName.Read);
+      if (errorMessageReply !== undefined) {
+        return errorMessageReply;
+      }
+  
+      const handler = new SubscriptionsRequestHandler(this.didResolver, this.messageStore, this.dataStore, this.eventStream as EventStream);
+      return handler.handle({ tenant, message });
+    }
+    
   /**
    * Handles a `RecordsQuery` message.
    */
@@ -237,5 +282,6 @@ export type DwnConfig = {
 
   messageStore: MessageStore;
   dataStore: DataStore;
-  eventLog: EventLog
+  eventLog: EventLog;
+  eventStream?: EventStreamI;
 };
